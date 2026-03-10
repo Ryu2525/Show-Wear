@@ -16,3 +16,5 @@ João Pedro Peterutto - 22.125.066-5<br>
 João Pedro Sabino - 22.224.032-7<br>
 Julian Ryu Takeda - 22.224.030-1<br>
 Vinícius de Castro Duarte - 22.224.020-2<br>
+
+Para rodar o codigo precisar digitar no terminal: streamlit run usuario.py
