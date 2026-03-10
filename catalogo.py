@@ -4,7 +4,7 @@ from Supabase import (
     buscarShowsAtivos, 
     buscarVestuarioTematico, 
     buscar_ingressos_por_show,
-    verificarDisponibilidade  # Nova importação
+    verificarDisponibilidade
 )
 
 def show_catalog():
@@ -88,10 +88,8 @@ def render_vestuarios():
     
     if pecas:
         for p in pecas:
-            # CHAMADA DA FUNÇÃO DE VERIFICAÇÃO
             disponivel, mensagem = verificarDisponibilidade(p['id'])
             
-            # O ícone muda conforme a disponibilidade
             icone = "✅" if disponivel else "❌"
             
             with st.expander(f"{icone} {p['nome_peca']} ({p['categoria']})"):

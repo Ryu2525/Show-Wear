@@ -33,7 +33,6 @@ def  buscarShowsAtivos():
 
 def buscarVestuarioTematico(show_id):
     try:
-        # Filtra na tabela vestuarios onde a coluna show_id é igual ao ID selecionado
         response = supabase.table("vestuarios").select("*").eq("show_id", show_id).execute()
         return response.data
     except Exception as e:
@@ -49,14 +48,12 @@ def buscar_ingressos_por_show(show_id):
 
 def verificarDisponibilidade(vestuario_id):
     try:
-        # Busca o vestuário específico pelo ID
         response = supabase.table("vestuarios").select("status, nome_peca").eq("id", vestuario_id).execute()
         
         if response.data:
             item = response.data[0]
             status = item.get("status", "").lower()
             
-            # Lógica de verificação: se o status for 'disponível', retorna True
             if status == "disponível":
                 return True, f"O produto '{item['nome_peca']}' está disponível!"
             else:
