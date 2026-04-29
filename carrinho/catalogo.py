@@ -4,8 +4,12 @@ from Supabase import (
     buscarShowsAtivos, 
     buscarVestuarioTematico, 
     buscar_ingressos_por_show,
-    verificarDisponibilidade
+    verificarDisponibilidade,
+    buscarIdUsuarioPorEmail,
+    adicionarItem
 )
+
+from dto import DadosItemCarrinhoAdicionarItem
 
 def show_catalog():
     if 'show_selecionado' not in st.session_state:
@@ -13,7 +17,6 @@ def show_catalog():
     if 'tela_atual' not in st.session_state:
         st.session_state.tela_atual = "selecao_show"
 
-    # --- NAVEGAÇÃO ---
     if st.session_state.tela_atual == "selecao_show":
         render_selecao_show()
     elif st.session_state.tela_atual == "escolha_categoria":
@@ -41,7 +44,6 @@ def render_selecao_show():
                 data_exibicao = f"{data_pt[2]}/{data_pt[1]}/{data_pt[0]}" if len(data_pt) == 3 else s['data_evento']
                 st.write(f"📍 **Local:** {s['local']} | 📅 **Data:** {data_exibicao}")
             with col2:
-                st.write("") 
                 if st.button("Explorar Show", key=f"btn_{s['id']}", use_container_width=True):
                     st.session_state.show_selecionado = s
                     st.session_state.tela_atual = "escolha_categoria"
@@ -75,7 +77,7 @@ def render_escolha_categoria():
                 st.session_state.tela_atual = "detalhes_vestuario"
                 st.rerun()
 
-# --- TELA 3: LISTAGEM DE VESTUÁRIOS COM VERIFICAÇÃO ---
+# --- TELA 3: VESTUÁRIOS ---
 def render_vestuarios():
     show = st.session_state.show_selecionado
     st.title(f"👗 Figurinos: {show['nome']}")
@@ -89,7 +91,6 @@ def render_vestuarios():
     if pecas:
         for p in pecas:
             disponivel, mensagem = verificarDisponibilidade(p['id'])
-            
             icone = "✅" if disponivel else "❌"
             
             with st.expander(f"{icone} {p['nome_peca']} ({p['categoria']})"):
@@ -98,12 +99,21 @@ def render_vestuarios():
                     st.image(p.get('foto_url', "https://via.placeholder.com/200"), use_container_width=True)
                 with c2:
                     st.write(f"**Categoria:** {p.get('categoria', 'N/A')}")
-                    st.write(f"**Tamanho:** {p.get('tamanho', 'N/A')}")
+                    st.write(f"**Preço:** R$ {p.get('preco', 0.0):.2f}")
+                    st.write(f"**Disponíveis:** {p.get('quantidade_disponivel', 0)}")
                     
                     if disponivel:
                         st.success(mensagem)
                         if st.button(f"Reservar {p['nome_peca']}", key=f"res_{p['id']}"):
-                            st.toast(f"Solicitação de reserva para {p['nome_peca']} enviada!")
+                            req = DadosItemCarrinhoAdicionarItem(
+                                idUsuario=buscarIdUsuarioPorEmail(st.session_state.user_email),
+                                idItem=p['id'],
+                                tipoItem="vestuario",
+                                quantidade=1,
+                                precoUnitario=p.get('preco', 0.0)
+                            )
+                            adicionarItem(req)
+                            st.success(f"{p['nome_peca']} adicionado ao carrinho!")
                     else:
                         st.error(mensagem)
                         st.button("Indisponível", disabled=True, key=f"disabled_{p['id']}")
@@ -126,13 +136,20 @@ def render_ingressos():
             with st.container(border=True):
                 c1, c2, c3 = st.columns([2, 1, 1])
                 c1.subheader(ing['tipo_setor'])
-                c2.write(f"💰 **R$ {ing['preco']:.2f}**")
+                c2.write(f"💰 **R$ {ing.get('preco', 0.0):.2f}**")
                 
-                qtd = ing['quantidade_disponivel']
+                qtd = ing.get('quantidade_disponivel', 0)
                 if qtd > 0:
                     c3.success(f"🔥 {qtd} restantes")
                     if st.button(f"Comprar {ing['tipo_setor']}", key=f"buy_{ing['id']}", use_container_width=True):
-                        st.balloons()
+                        req = DadosItemCarrinhoAdicionarItem(
+                            idUsuario=buscarIdUsuarioPorEmail(st.session_state.user_email),
+                            idItem=ing['id'],
+                            tipoItem="ingresso",
+                            quantidade=1,
+                            precoUnitario=ing.get('preco', 0.0)
+                        )
+                        adicionarItem(req)
                         st.success("Ingresso adicionado ao carrinho!")
                 else:
                     c3.error("🚫 Esgotado")

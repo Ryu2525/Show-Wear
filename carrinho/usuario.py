@@ -1,6 +1,7 @@
 import streamlit as st
-from Supabase import cadastrarUsuario,  realizarLogin
-from catalogo import show_catalog 
+from Supabase import cadastrarUsuario, realizarLogin
+from catalogo import show_catalog
+from carrinho import carrinho_page
 
 st.set_page_config(page_title="Sistema Showwear", page_icon="🛍️")
 
@@ -9,9 +10,10 @@ if "logado" not in st.session_state:
     st.session_state.logado = False
 if "user_email" not in st.session_state:
     st.session_state.user_email = None
+if "user_id" not in st.session_state:       # ← inicializa aqui
+    st.session_state.user_id = None
 
 # --- Definição das Funções de Página ---
-
 def login_page():
     st.title("🔐 Acesso ao Sistema")
     
@@ -30,10 +32,11 @@ def login_page():
         senha_login = st.text_input("Senha", type="password", key="login_pass")
         
         if st.button("Entrar"):
-            sucesso, resultado =  realizarLogin(email_login, senha_login)
+            sucesso, resultado = realizarLogin(email_login, senha_login)
             if sucesso:
                 st.session_state.logado = True
-                st.session_state.user_email = email_login 
+                st.session_state.user_email = email_login
+                st.session_state.user_id = resultado["id"]
                 st.rerun()
             else:
                 st.error(resultado)
@@ -63,14 +66,14 @@ def catalog_page():
     st.write(f"Bem-vindo, **{st.session_state.user_email}**!")
     show_catalog()
 
-
+# --- Navegação ---
 login_nav = st.Page(login_page, title="Minha Conta", icon="🔐")
 catalog_nav = st.Page(catalog_page, title="Catálogo de Produtos", icon="🛍️")
+carrinho_nav = st.Page(carrinho_page, title="Carrinho", icon="🛒")
 
 if st.session_state.logado:
-    pg = st.navigation([catalog_nav, login_nav])
+    pg = st.navigation([catalog_nav, carrinho_nav, login_nav])
 else:
     pg = st.navigation([login_nav])
 
-# Executa a navegação selecionada
 pg.run()
